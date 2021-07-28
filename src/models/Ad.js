@@ -2,16 +2,16 @@ const mongoose = require("mongoose");
 mongoose.Promise = global.Promise;
 
 const Ad = new mongoose.Schema({
-    idUser: string,
-    state: string,
-    category: string,
-    title: string,
+    idUser: String,
+    state: String,
+    category: String,
+    title: String,
     image: [Object],
     price: Number,
     priceNegoccible: Boolean,
-    description: string,
+    description: String,
     views: Number,
-    status: string,
+    status: String,
     create_at: Date
 });
 

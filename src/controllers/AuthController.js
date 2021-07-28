@@ -37,6 +37,7 @@ module.exports = {
     const token = await bcrypt.hash(payload, 10);
 
     user.token = token;
+
     await user.save();
     res.json({token, email: data.email});
 

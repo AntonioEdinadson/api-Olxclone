@@ -12,24 +12,23 @@ module.exports = {
     if (req.body.token) {
       token = req.body.token;
     }
-    
+
     if (req.query.token) {
       token = req.query.token;
     }
 
-    if ((token = '')) {
+    if ((token == "")) {
       res.json({ message: "Token Invalid2" });
       return;
     }
 
-    const user = await User.findOne({ token });
+    const user = await User.findOne({ token: token });
 
     if (!user) {
       console.log(token);
       res.json({ message: "Token Invalid3" });
       return;
     }
-
     next();
   },
 };

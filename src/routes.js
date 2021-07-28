@@ -7,6 +7,7 @@ const AdsController = require('./controllers/AdsController');
 
 const Auth = require('./middlewares/Auth');
 const AuthValidator = require('./validators/AuthValidator');
+const UserValidator = require('./validators/UserValidator');
 
 routes.get('/states', UserController.getStates);
 
@@ -14,7 +15,7 @@ routes.post('/user/signin', AuthValidator.signin, AuthController.signin);
 routes.post('/user/signup', AuthValidator.signup, AuthController.signup);
 
 routes.get('/user/me', Auth.private, UserController.info);
-routes.put('/user/me', Auth.private, UserController.editAction);
+routes.put('/user/me', UserValidator.editAction, Auth.private, UserController.editAction);
 
 routes.get('/categories', AdsController.getCategories);
 
