@@ -1,4 +1,6 @@
+const mongoose = require("mongoose");
 const { validationResult, matchedData } = require("express-validator");
+const bcrypt = require("bcrypt");
 
 const State = require("../models/State");
 const User = require("../models/User");
@@ -50,7 +52,8 @@ module.exports = {
     }
 
     if (data.email) {
-      const emailCheck = await findOne({ email: data.email });
+      const emailCheck = await User.findOne({ email: data.email });
+
       if (emailCheck) {
         res.json({ error: "E-mail existente" });
         return;
@@ -58,7 +61,24 @@ module.exports = {
       updates.email = data.email;
     }
 
-    await User.findByIdAndUpdate({ token: data.token }, { $set: updates });
+    if (data.state) {
+      if (mongoose.Types.ObjectId.isValid(data.state)) {
+        const stateCheck = await State.findById(data.state);
+
+        if (!stateCheck) {
+          res.json({ error: "Estado Inexistente" });
+          return;
+        }
+      }
+
+      updates.state = data.state;
+    }
+
+    if(data.password) {
+      updates.passwordHash = await bcrypt.hash(data.password);
+    }
+
+    await User.findOneAndUpdate({ token: data.token }, { $set: updates });
     res.json({});
   },
 };
