@@ -22,10 +22,10 @@ mongoose.connection.on('error', (err) => {
 
 const server = express();
 
+server.use(express.json());
+server.use(express.urlencoded({extended: false}));
 server.use(cors());
 server.use(morgan('dev'));
-server.use(express.json());
-server.use(express.urlencoded({extended: true}));
 server.use(fileUpload());
 
 server.use(express.static(path.join(__dirname, 'public')));
