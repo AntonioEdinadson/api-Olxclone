@@ -2,7 +2,9 @@ const User = require("../models/User");
 
 module.exports = {
   private: async (req, res, next) => {
-    if (!req.query.token || req.body.token) {
+    
+    if (!req.query.token && !req.body.token) {      
+
       res.json({ message: "Token Invalid1" });
       return;
     }
@@ -22,13 +24,14 @@ module.exports = {
       return;
     }
 
-    const user = await User.findOne({ token: token });
+    const user = await User.findOne({ token: token });    
 
     if (!user) {
-      console.log(token);
-      res.json({ message: "Token Invalid3" });
+      console.log("TOKEN: " + token);
+      res.json({ message: "Token Invalid3" });    
       return;
     }
+
     next();
   },
 };
