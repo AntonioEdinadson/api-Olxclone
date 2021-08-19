@@ -8,7 +8,7 @@ const Ad = new mongoose.Schema({
     title: String,
     image: [Object],
     price: Number,
-    priceNegoccible: Boolean,
+    priceNegotiable: Boolean,
     description: String,
     views: Number,
     status: String,
