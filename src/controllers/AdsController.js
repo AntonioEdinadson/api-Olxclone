@@ -44,13 +44,12 @@ module.exports = {
     let filters = { status: true };
 
     if (query) {
-      filters.title = { '$regex': query, '$options': 'i' };
+      filters.title = { $regex: query, $options: "i" };
     }
 
     if (category) {
-
       const c = await Category.findOne({ slug: category }).exec();
-      
+
       if (c) {
         filters.category = c._id.toString();
       }
@@ -67,11 +66,11 @@ module.exports = {
     total = adsTotal.length;
 
     const adsData = await Ad.find(filters)
-      .sort({ create_at: (sort == "desc" ? -1 : 1 )})
+      .sort({ create_at: sort == "desc" ? -1 : 1 })
       .skip(parseInt(offset))
       .limit(parseInt(limit))
       .exec();
-      
+
     let ads = [];
 
     for (let i in adsData) {
@@ -95,8 +94,6 @@ module.exports = {
 
     res.json({ ads: ads, total: total });
   },
-
-  getItem: async (req, res) => {},
 
   addAction: async (req, res) => {
     let { title, price, priceneg, desc, cat, token } = req.body;
@@ -169,6 +166,60 @@ module.exports = {
 
     const info = await newAd.save();
     res.json({ id: info._id });
+  },
+
+  getItem: async (req, res) => {
+    let { id, other = null } = req.query;
+
+    if (!id) {
+      res.json({ error: "Sem Produto" });
+      return;
+    }
+
+    if (id.length < 12) {
+      res.json({ error: "ID INVALIDO" });
+      return;
+    }
+
+    const ad = await Ad.findById(id);
+
+    if (!ad) {
+      res.json({ error: "Produto não encontrado" });
+      return;
+    }
+
+    let images = [];
+
+    for (let i in ad.images) {
+      images.push(`${process.env.BASE}/media/${ad.images[i].url}`);
+    }
+
+    // ADICIONANDDO VISUALIZAÇÕES
+    ad.views++;
+    await ad.save();
+
+    let userInfo = await User.findById(ad.idUser).exec();
+    // let category = await Category.findById(ad.category).exec();
+    let stateInfo = await State.findById(ad.state).exec();
+
+    res.json({
+      id: ad._id,
+      title: ad.title,
+      price: ad.price,
+      priceNegotiable: ad.priceNegotiable,
+      description: ad.description,
+      views: ad.views,
+      create_at: ad.create_at,
+      images: images,
+      
+      userInfo: { 
+        name: userInfo.name, 
+        email: userInfo.email 
+      },
+
+      // category: category,
+      stateName: stateInfo.name
+    });
   },
 
   editAction: async (req, res) => {},
