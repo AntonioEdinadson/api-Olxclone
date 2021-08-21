@@ -5,6 +5,7 @@ const Category = require("../models/Category");
 const User = require("../models/User");
 const Ad = require("../models/Ad");
 const State = require("../models/State");
+const { update } = require("../models/Category");
 
 const addImage = async (buffer) => {
   let newName = `${uuidv4()}.jpg`;
@@ -105,6 +106,18 @@ module.exports = {
       return;
     }
 
+    if(cat.length < 12) {
+      res.json({ error: "Categoria Inexistente"});
+      return;
+    }
+
+    const category = await Category.findById(cat);
+    if(!category) {
+      res.json({ error: "Categoria Inexistente"});
+      return;
+    }
+
+
     if (price) {
       price = price.replace(".", "").replace(",", ".").replace("R$", "");
       price = parseFloat(price);
@@ -202,6 +215,39 @@ module.exports = {
     // let category = await Category.findById(ad.category).exec();
     let stateInfo = await State.findById(ad.state).exec();
 
+    let others = [];
+
+
+    if(other) {
+
+      const otherData = await User.find({status: true, idUser: ad.idUser}).exec();
+
+      for(let i in otherData) {
+
+        if(otherData[i]._id.toString() != ad._id.toString()) {
+          
+          let image = `${process.env.BASE}/media/default.jpg`;
+
+          let defaultImage = otherData[i].images.find(e => e.default);
+
+          if(defaultImage) {
+            image = `${process.env.BASE}/media/${defaultImage.url}`;
+          }
+
+          other.push({
+            id: otherDate[i]._id,
+            title: otherDate[i].title,
+            price: otherDate[i].price,
+            priceNegotiable: otherDate[i].priceNegotiable,
+            image
+          });
+
+        }
+        
+      }      
+
+    }
+
     res.json({
       id: ad._id,
       title: ad.title,
@@ -218,9 +264,102 @@ module.exports = {
       },
 
       // category: category,
-      stateName: stateInfo.name
+      stateName: stateInfo.name,
+      others
     });
   },
 
-  editAction: async (req, res) => {},
+  editAction: async (req, res) => {
+
+    let { id } = req.params;
+    let { title, status, price, priceneg, desc, cat, image, token } = req.body;
+
+    if(id.length < 12) {
+      res.json({error: "ID INVALIDO"});
+      return;
+    }
+
+    const ad = await Ad.findById(id).exec();
+
+    if(!ad) {
+      res.json({error: "ANUNCIO INESISTENTE"});
+      return;
+    }
+
+
+    const user = await User.findOne({token: token}).exec();
+
+    if(user._id.toString() !== ad.idUser) {
+      res.json({error: "ESSE ANUNCIO NÃO É SEU!"});
+      return;
+    }
+
+    let updates = {};
+
+    if(title) {
+      updates.title = title;
+    }
+
+    if (price) {
+      price = price.replace(".", "").replace(",", ".").replace("R$", "");
+      price = parseFloat(price);
+      updates.price = price
+    }
+  
+    if(priceneg) {
+      updates.priceNegotiable = priceneg;
+    }
+  
+    if(status) {
+      updates.status = status;
+    }
+  
+    if(desc) {
+      updates.desc = desc;
+    }
+  
+  
+    if(cat) {
+  
+      const category = await Category.findOne({slug: cat}).exec();
+  
+      if(!category) {
+        res.json("CATEGORIA INESISTENTE");
+      }
+  
+      updates.category = category._id.toString();
+  
+    }
+    
+    await Ad.findByIdAndUpdate(id, {$set: updates});
+    
+    if(req.files && req.files.img) {
+      const adI = await Ad.findById(id);
+
+      if(req.files.img.length == undefined) {
+          if(['image/jpeg', 'image/jpg', 'image/png'].includes(req.files.img.mimetype)) {
+              let url = await addImage(req.files.img.data);
+              adI.image.push({
+                  url,
+                  default: false
+              });
+          }
+      } else {
+          for(let i=0; i < req.files.img.length; i++) {
+              if(['image/jpeg', 'image/jpg', 'image/png'].includes(req.files.img[i].mimetype)) {
+                  let url = await addImage(req.files.img[i].data);
+                  adI.image.push({
+                      url,
+                      default: false
+                  });
+              }
+          }
+      }
+
+      adI.images = [...adI.image];
+      await adI.save();
+  }
+    
+    res.json({error: ''});
+  },
 };
